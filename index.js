@@ -16,7 +16,7 @@ function parse (query) {
       .join(delimiter)
   }
 
-  var match = join('match', '')
+  var match = join('match', ' ')
   var where = join('where', ' and ')
   var fields = join('return', ', ')
 
@@ -34,18 +34,21 @@ function parse (query) {
     var name = root.name
     var alias = root.alias || name
 
+    var match
+
     if (root !== parent) {
       var edge = root.params.filter((x) => x.name === 'edge')[0]
       if (!edge) throw new Error(`missing edge parameter for ${name}`)
-      var parentEntity = tokens.slice(-1)[0]
-      parentEntity.match += `<-[:${edge.value.value}]->(${alias}:${name})`
+      match = `match(${parent.alias || parent.name})<-[:${edge.value.value}]->(${alias}:${name})`
+    } else {
+      match = `match(${alias}:${name})`
     }
 
     var entity = {
       name: name,
       alias: alias,
       where: '',
-      match: (root === parent) ? `match(${alias}:${name})` : '',
+      match: match,
       return: ''
     }
 
