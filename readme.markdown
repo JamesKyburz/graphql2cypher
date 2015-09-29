@@ -20,7 +20,7 @@ tape('user entity with address', (t) => {
     }
   `)
   var expected = `
-    match(u:user)<-[:address]->(a:address)
+    match(u:user) match(u)<-[:address]->(a:address)
     where u.id = {id} and a.id = {addressId}
     return u.name, a.line
   `
