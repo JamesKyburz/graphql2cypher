@@ -13,7 +13,8 @@
   "main": "index.js",
   "version": "1.0.1",
   "scripts": {
-    "test": "standard && tape test/* | faucet"
+    "test": "standard && tape test/* | faucet",
+    "autotest": "watch 'npm t' ."
   },
   "dependencies": {
     "graphql-parser": "^2.1.0"
@@ -21,7 +22,8 @@
   "devDependencies": {
     "faucet": "0.0.1",
     "standard": "^5.3.1",
-    "tape": "^4.2.0"
+    "tape": "^4.2.0",
+    "watch": "^0.16.0"
   },
   "engines": {
     "node": ">= 4.0.0"
