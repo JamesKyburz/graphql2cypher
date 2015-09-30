@@ -31,13 +31,11 @@ function parse (query, cb) {
   }
 
   var match = join('match', ' ')
-  var where = join('where', ' and ')
   var fields = join('return', ', ')
 
   if (!map('return').length) return error('no fields specified')
 
   var cql = match
-  if (where) cql += '\nwhere ' + where
   cql += '\nreturn ' + fields
 
   if (cb) {
@@ -59,15 +57,14 @@ function parse (query, cb) {
       var edge = root.params.filter((x) => x.name === 'edge')[0]
       if (!edge) return error(`missing edge parameter for ${name}`)
       parentName = parent.alias || parent.name
-      match = `optional match(${parentName})<-[:${edge.value.value}]->(${alias}:${name})`
+      match = `optional match(${parentName})<-[:${edge.value.value}]->(${alias}:${name} {})`
     } else {
-      match = `match(${alias}:${name})`
+      match = `match(${alias}:${name} {})`
     }
 
     var entity = {
       name: name,
       alias: alias,
-      where: '',
       match: match,
       parent: parentName,
       return: ''
@@ -80,8 +77,7 @@ function parse (query, cb) {
       var key = item.name
       var value = item.value.type === 'Literal' ? item.value.value : `{${item.value.name}}`
       if (key === 'edge') return
-      if (entity.where.length) entity.where += ' and '
-      entity.where += `${entity.alias}.${key} = ${parameterValue(value)}`
+      entity.match = entity.match.slice(0, -2) + `${key}: ${parameterValue(value)}` + '})'
     })
 
     if (root.fields.length) {
