@@ -10,21 +10,23 @@ main.js:
 
 ```javascript
 tape('user entity with address', (t) => {
-  t.plan(1)
-  var cql = parse(`
+  t.plan(2)
+  parse(`
     user(id: <id>) as u {
       name,
       address(edge: "address", id: <addressId>) as a {
         line
       }
     }
-  `)
+  `, (err, r) => {
+    t.error(err)
+    t.equals(r.cql, expected)
+  })
   var expected = `
     match(u:user) match(u)<-[:address]->(a:address)
     where u.id = {id} and a.id = {addressId}
     return u.name, a.line
   `
-  t.equals(cql, expected)
 })
 ```
 

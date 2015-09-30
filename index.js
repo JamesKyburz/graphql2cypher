@@ -1,4 +1,5 @@
 var parser = require('graphql-parser')
+var reduce = require('./reduce')
 
 module.exports = parse
 
@@ -10,8 +11,7 @@ function parse (query, cb) {
     if (errorOccured) return
     errorOccured = true
     err = new Error(err)
-    if (cb) return cb(err)
-    throw err
+    return cb(err)
   }
 
   var tokens = []
@@ -38,11 +38,10 @@ function parse (query, cb) {
   var cql = match
   cql += '\nreturn ' + fields
 
-  if (cb) {
-    return cb(null, cql)
-  } else {
-    return cql
-  }
+  return cb(null, {
+    cql: cql,
+    reduce: reduce(tokens)
+  })
 
   function parseEntity (root, parent) {
     if (!root || !root.fields) return
