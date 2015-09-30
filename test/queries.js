@@ -24,7 +24,7 @@ tape('user entity with address', (t) => {
     }
   `)
   var expected = trim`
-    match(user:user) match(user)<-[:address]->(address:address)
+    match(user:user) optional match(user)<-[:address]->(address:address)
     where user.id = {id} and address.id = {addressId}
     return id(user) as __userid, user.name, id(address) as __addressid, address.line
   `
@@ -48,7 +48,7 @@ tape('deep query', (t) => {
     }
   `)
   var expected = trim`
-    match(p:person) match(p)<-[:friend]->(f:friend) match(f)<-[:friend]->(foff:friend) match(foff)<-[:friend]->(foffoff:friend)
+    match(p:person) optional match(p)<-[:friend]->(f:friend) optional match(f)<-[:friend]->(foff:friend) optional match(foff)<-[:friend]->(foffoff:friend)
     where p.id = {id}
     return id(p) as __pid, p.name, id(f) as __fid, f.name, id(foff) as __foffid, foff.name, id(foffoff) as __foffoffid, foffoff.name
   `
@@ -72,7 +72,7 @@ tape('root edges', (t) => {
     }
   `)
   var expected = trim`
-    match(r:root) match(r)<-[:child]->(c1:child) match(c1)<-[:child]->(c1c1:child) match(r)<-[:child]->(c2:child)
+    match(r:root) optional match(r)<-[:child]->(c1:child) optional match(c1)<-[:child]->(c1c1:child) optional match(r)<-[:child]->(c2:child)
     return id(r) as __rid, r.name, id(c1) as __c1id, c1.name, id(c1c1) as __c1c1id, c1c1.name, id(c2) as __c2id, c2.name
   `
   t.equals(cql, expected)
