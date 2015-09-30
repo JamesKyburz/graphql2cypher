@@ -9,18 +9,21 @@ function parse (query) {
 
   parseEntity(json, json, json.name)
 
-  function join (part, delimiter) {
+  function map (part) {
     return Object.keys(tokens)
       .map((x) => tokens[x][part])
       .filter(Boolean)
-      .join(delimiter)
+  }
+
+  function join (part, delimiter) {
+    return map(part).join(delimiter)
   }
 
   var match = join('match', ' ')
   var where = join('where', ' and ')
   var fields = join('return', ', ')
 
-  if (fields.length < 6) throw new Error('no fields specified')
+  if (!map('return').length) throw new Error('no fields specified')
 
   var cql = match
   if (where) cql += '\nwhere ' + where
@@ -34,12 +37,14 @@ function parse (query) {
     var name = root.name
     var alias = root.alias || name
 
-    var match
+    var match = null
+    var parentName = null
 
     if (root !== parent) {
       var edge = root.params.filter((x) => x.name === 'edge')[0]
       if (!edge) throw new Error(`missing edge parameter for ${name}`)
-      match = `match(${parent.alias || parent.name})<-[:${edge.value.value}]->(${alias}:${name})`
+      parentName = parent.alias || parent.name
+      match = `match(${parentName})<-[:${edge.value.value}]->(${alias}:${name})`
     } else {
       match = `match(${alias}:${name})`
     }
@@ -49,13 +54,14 @@ function parse (query) {
       alias: alias,
       where: '',
       match: match,
+      parent: parentName,
       return: ''
     }
 
     if (tokens.filter((x) => x.alias === alias).length) throw new Error(`duplicate ${alias} please use as to alias`)
     tokens.push(entity)
 
-    ;(root.params || []).forEach((item) => {
+    ;(root.params).forEach((item) => {
       var key = item.name
       var value = item.value.type === 'Literal' ? item.value.value : `{${item.value.name}}`
       if (key === 'edge') return
@@ -63,12 +69,16 @@ function parse (query) {
       entity.where += `${entity.alias}.${key} = ${parameterValue(value)}`
     })
 
-    ;(root.fields || []).forEach((item) => {
+    if (root.fields.length) {
+      entity.return = `id(${alias}) as __${alias}id`
+    }
+
+    ;(root.fields).forEach((item) => {
       var key = item.name
       if (item.fields.length) {
         parseEntity(item, root)
       } else {
-        if (entity.return.length) entity.return += ','
+        if (entity.return.length) entity.return += ', '
         entity.return += `${entity.alias}.${key}`
       }
     })
