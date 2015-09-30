@@ -2,12 +2,23 @@ var parser = require('graphql-parser')
 
 module.exports = parse
 
-function parse (query) {
+function parse (query, cb) {
   var json = parser.parse(`{ ${query} }`).fields[0]
+  var errorOccured
+
+  var error = (err) => {
+    if (errorOccured) return
+    errorOccured = true
+    err = new Error(err)
+    if (cb) return cb(err)
+    throw err
+  }
 
   var tokens = []
 
   parseEntity(json, json, json.name)
+
+  if (errorOccured) return
 
   function map (part) {
     return Object.keys(tokens)
@@ -23,13 +34,17 @@ function parse (query) {
   var where = join('where', ' and ')
   var fields = join('return', ', ')
 
-  if (!map('return').length) throw new Error('no fields specified')
+  if (!map('return').length) return error('no fields specified')
 
   var cql = match
   if (where) cql += '\nwhere ' + where
   cql += '\nreturn ' + fields
 
-  return cql
+  if (cb) {
+    return cb(null, cql)
+  } else {
+    return cql
+  }
 
   function parseEntity (root, parent) {
     if (!root || !root.fields) return
@@ -42,7 +57,7 @@ function parse (query) {
 
     if (root !== parent) {
       var edge = root.params.filter((x) => x.name === 'edge')[0]
-      if (!edge) throw new Error(`missing edge parameter for ${name}`)
+      if (!edge) return error(`missing edge parameter for ${name}`)
       parentName = parent.alias || parent.name
       match = `optional match(${parentName})<-[:${edge.value.value}]->(${alias}:${name})`
     } else {
@@ -58,7 +73,7 @@ function parse (query) {
       return: ''
     }
 
-    if (tokens.filter((x) => x.alias === alias).length) throw new Error(`duplicate ${alias} please use as to alias`)
+    if (tokens.filter((x) => x.alias === alias).length) return error(`duplicate ${alias} please use as to alias`)
     tokens.push(entity)
 
     ;(root.params).forEach((item) => {
