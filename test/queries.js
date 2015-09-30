@@ -102,12 +102,39 @@ tape('cannot have duplicate names', (t) => {
   t.plan(1)
   var fn = () => parse(`
     root() {
-      root() {
+      root(edge: "x") {
         x
       }
     }
   `)
   t.throws(fn, 'duplicate root please use as to alias')
+})
+
+tape('user entity with 1 field with callback', (t) => {
+  t.plan(2)
+  var expected = trim`
+    match(user:user)
+    where user.id = {id}
+    return id(user) as __userid, user.name
+  `
+  parse(`user(id: <id>) { name }`, (err, cql) => {
+    t.error(err)
+    t.equals(cql, expected)
+  })
+})
+
+tape('cannot have duplicate names with callback', (t) => {
+  t.plan(1)
+  parse(`
+    root() {
+      root(edge: "x") {
+        x
+      }
+    }
+  `, (x) => {
+    t.equals(x.message, 'duplicate root please use as to alias')
+  }
+ )
 })
 
 function trim (strings) {
