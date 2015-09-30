@@ -6,8 +6,7 @@ tape('user entity with 1 field', (t) => {
   t.plan(1)
   var cql = parse(`user(id: <id>) { name }`)
   var expected = trim`
-    match(user:user)
-    where user.id = {id}
+    match(user:user {id: {id}})
     return id(user) as __userid, user.name
   `
   t.equals(cql, expected)
@@ -18,14 +17,13 @@ tape('user entity with address', (t) => {
   var cql = parse(`
     user(id: <id>) {
       name,
-      address(edge: "address", id: <addressId>) {
+      address(edge: "address", addressId: <addressId>) {
         line
       }
     }
   `)
   var expected = trim`
-    match(user:user) optional match(user)<-[:address]->(address:address)
-    where user.id = {id} and address.id = {addressId}
+    match(user:user {id: {id}}) optional match(user)<-[:address]->(address:address {addressId: {addressId}})
     return id(user) as __userid, user.name, id(address) as __addressid, address.line
   `
   t.equals(cql, expected)
@@ -48,8 +46,7 @@ tape('deep query', (t) => {
     }
   `)
   var expected = trim`
-    match(p:person) optional match(p)<-[:friend]->(f:friend) optional match(f)<-[:friend]->(foff:friend) optional match(foff)<-[:friend]->(foffoff:friend)
-    where p.id = {id}
+    match(p:person {id: {id}}) optional match(p)<-[:friend]->(f:friend {}) optional match(f)<-[:friend]->(foff:friend {}) optional match(foff)<-[:friend]->(foffoff:friend {})
     return id(p) as __pid, p.name, id(f) as __fid, f.name, id(foff) as __foffid, foff.name, id(foffoff) as __foffoffid, foffoff.name
   `
   t.equals(cql, expected)
@@ -72,7 +69,7 @@ tape('root edges', (t) => {
     }
   `)
   var expected = trim`
-    match(r:root) optional match(r)<-[:child]->(c1:child) optional match(c1)<-[:child]->(c1c1:child) optional match(r)<-[:child]->(c2:child)
+    match(r:root {}) optional match(r)<-[:child]->(c1:child {}) optional match(c1)<-[:child]->(c1c1:child {}) optional match(r)<-[:child]->(c2:child {})
     return id(r) as __rid, r.name, id(c1) as __c1id, c1.name, id(c1c1) as __c1c1id, c1c1.name, id(c2) as __c2id, c2.name
   `
   t.equals(cql, expected)
@@ -113,8 +110,7 @@ tape('cannot have duplicate names', (t) => {
 tape('user entity with 1 field with callback', (t) => {
   t.plan(2)
   var expected = trim`
-    match(user:user)
-    where user.id = {id}
+    match(user:user {id: {id}})
     return id(user) as __userid, user.name
   `
   parse(`user(id: <id>) { name }`, (err, cql) => {
