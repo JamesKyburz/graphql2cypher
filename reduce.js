@@ -2,6 +2,7 @@ module.exports = reduce
 
 function reduce (tokens) {
   var entityPointer = {}
+  var nulls = 0
 
   return (results) => {
     var result = {}
@@ -23,7 +24,7 @@ function reduce (tokens) {
         var column = columns[j]
         if (/__.*id$/.test(column)) {
           var entity = column.slice(2, -2)
-          if (!row[j]) row[j] = Math.random()
+          if (!row[j]) row[j] = nulls++
           if (!added[row[j]]) {
             var data = {}
             var edge = edges[entity]
