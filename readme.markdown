@@ -14,7 +14,7 @@ tape('user entity with address', (t) => {
   parse(`
     user(id: <id>) as u {
       name,
-      address(edge: "address", id: <addressId>) as a {
+      address(edge: ":address", id: <addressId>) as a {
         line
       }
     }

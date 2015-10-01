@@ -23,7 +23,7 @@ tape('user entity with address', (t) => {
   parse(`
     user(id: <id>) {
       name,
-      address(edge: "address", addressId: <addressId>) {
+      address(edge: ":address", addressId: <addressId>) {
         line
       }
     }
@@ -42,11 +42,11 @@ tape('deep query', (t) => {
   parse(`
     person(id: <id>) as p {
       name,
-      friend(edge: "friend") as f {
+      friend(edge: ":friend") as f {
         name,
-        friend(edge: "friend") as foff{
+        friend(edge: ":friend") as foff{
           name,
-          friend(edge: "friend") as foffoff{
+          friend(edge: ":friend") as foffoff{
             name
           }
         }
@@ -67,13 +67,13 @@ tape('root edges', (t) => {
   parse(`
     root() as r {
       name,
-      child(edge: "child") as c1 {
+      child(edge: ":child") as c1 {
         name,
-        child(edge: "child") as c1c1 {
+        child(edge: ":child") as c1c1 {
           name
         }
       },
-      child(edge: "child") as c2 {
+      child(edge: ":child") as c2 {
         name
       }
     }
@@ -181,9 +181,9 @@ tape('reduce simple test', (t) => {
   parse(`
     person() as p {
     name,
-    beer(edge: "likes") {
+    beer(edge: ":likes") {
       name,
-      award(edge: "award") as awards {
+      award(edge: ":award") as awards {
         name
       }
     }

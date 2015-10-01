@@ -21,7 +21,7 @@ function reduce (tokens) {
       var value
       for (var j = 0; j < row.length; j++) {
         var column = columns[j]
-        if (/id$/.test(column)) {
+        if (/__.*id$/.test(column)) {
           var entity = column.slice(2, -2)
           if (!row[j]) row[j] = Math.random()
           if (!added[row[j]]) {
@@ -43,7 +43,7 @@ function reduce (tokens) {
               value = row[k]
               if (value != null) data[part[1]] = value
             }
-            if (!Object.keys(data).length) {
+            if (!Object.keys(data).length && edge.parent) {
               entityPointer[edge.parent][entity].pop()
             }
           }

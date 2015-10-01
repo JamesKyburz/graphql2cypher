@@ -56,7 +56,7 @@ function parse (query, cb) {
       var edge = root.params.filter((x) => x.name === 'edge')[0]
       if (!edge) return error(`missing edge parameter for ${name}`)
       parentName = parent.alias || parent.name
-      match = `optional match(${parentName})<-[:${edge.value.value}]->(${alias}:${name} {})`
+      match = `optional match(${parentName})<-[${edge.value.value}]->(${alias}:${name} {})`
     } else {
       match = `match(${alias}:${name} {})`
     }
