@@ -12,9 +12,9 @@ main.js:
 tape('user entity with address', (t) => {
   t.plan(2)
   parse(`
-    user(id: <id>) as u {
+    user(id: <id>) {
       name,
-      address(edge: ":address", id: <addressId>) as a {
+      address(edge: ":address", addressId: <addressId>) {
         line
       }
     }
@@ -23,9 +23,8 @@ tape('user entity with address', (t) => {
     t.equals(r.cql, expected)
   })
   var expected = `
-    match(u:user) match(u)<-[:address]->(a:address)
-    where u.id = {id} and a.id = {addressId}
-    return u.name, a.line
+    match(user:user {id: {id}}) optional match(user)<-[:address]->(address:address {addressId: {addressId}})
+    return id(user) as __userid, user.name, id(address) as __addressid, address.line
   `
 })
 ```
