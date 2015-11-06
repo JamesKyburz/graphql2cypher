@@ -2,13 +2,20 @@ var tape = require('tape')
 
 var parse = require('../')
 
-tape('user entity with 1 field', (t) => {
+tape('test entity with 1 field', (t) => {
   t.plan(2)
   var expected = trim`
     match(user:user {id: {id}})
     return *
   `
-  parse(`user(id: <id>) { name }`, (err, r) => {
+
+  parse(`
+    user(id: <id>) {
+      properties {
+        name
+      }
+    }
+  `, (err, r) => {
     t.error(err)
     t.equals(r.cql, expected)
   })
@@ -22,9 +29,13 @@ tape('user entity with address', (t) => {
   `
   parse(`
     user(id: <id>) {
-      name,
-      address(relationship: ":address", addressId: <addressId>) {
-        line
+      properties {
+        name,
+        address(relationship: ":address", addressId: <addressId>) {
+          properties {
+            line
+          }
+        }
       }
     }
   `, (err, r) => {
@@ -41,13 +52,19 @@ tape('deep query', (t) => {
   `
   parse(`
     person(id: <id>) as p {
-      name,
-      friend(relationship: ":friend") as f {
+      properties {
         name,
-        friend(relationship: ":friend") as foff{
-          name,
-          friend(relationship: ":friend") as foffoff{
-            name
+        friend(relationship: ":friend") as f {
+          properties {
+            name,
+            friend(relationship: ":friend") as foff{
+              properties {
+                name,
+                friend(relationship: ":friend") as foffoff{
+                  name
+                }
+              }
+            }
           }
         }
       }
@@ -66,15 +83,23 @@ tape('root edges', (t) => {
   `
   parse(`
     root() as r {
-      name,
-      child(relationship: ":child") as c1 {
+      properties {
         name,
-        child(relationship: ":child") as c1c1 {
-          name
+        child(relationship: ":child") as c1 {
+          properties {
+            name,
+            child(relationship: ":child") as c1c1 {
+              properties {
+                name
+              }
+            }
+          }
+        },
+        child(relationship: ":child") as c2 {
+          properties {
+            name
+          }
         }
-      },
-      child(relationship: ":child") as c2 {
-        name
       }
     }
   `, (err, r) => {
@@ -96,8 +121,12 @@ tape('relationship must be specified', (t) => {
   t.plan(1)
   parse(`
     root() {
-      child() {
-        x
+      properties {
+        child() {
+          properties {
+            x
+          }
+        }
       }
     }
   `, (err) => {
@@ -109,8 +138,12 @@ tape('cannot have duplicate names', (t) => {
   t.plan(1)
   parse(`
     root() {
-      root(relationship: "x") {
-        x
+      properties {
+        root(relationship: "x") {
+          properties {
+            x
+          }
+        }
       }
     }
   `, (x) => {
@@ -127,9 +160,13 @@ tape('multiple parameters', (t) => {
   `
   parse(`
     root(id: <id>, name: <name>, prop: 42, prop2: "42") {
-      field,
-      child(relationship: "child", childId: <childId>, name: <name>, prop: 42, prop2: "42") {
-        field
+      properties {
+        field,
+        child(relationship: "child", childId: <childId>, name: <name>, prop: 42, prop2: "42") {
+          properties {
+            field
+          }
+        }
       }
     }
   `, (err, r) => {
