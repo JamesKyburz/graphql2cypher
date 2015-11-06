@@ -6,7 +6,7 @@ tape('user entity with 1 field', (t) => {
   t.plan(2)
   var expected = trim`
     match(user:user {id: {id}})
-    return id(user) as __userid, user.name
+    return *
   `
   parse(`user(id: <id>) { name }`, (err, r) => {
     t.error(err)
@@ -18,12 +18,12 @@ tape('user entity with address', (t) => {
   t.plan(2)
   var expected = trim`
     match(user:user {id: {id}}) optional match(user)<-[:address]->(address:address {addressId: {addressId}})
-    return id(user) as __userid, user.name, id(address) as __addressid, address.line
+    return *
   `
   parse(`
     user(id: <id>) {
       name,
-      address(edge: ":address", addressId: <addressId>) {
+      address(relationship: ":address", addressId: <addressId>) {
         line
       }
     }
@@ -36,17 +36,17 @@ tape('user entity with address', (t) => {
 tape('deep query', (t) => {
   t.plan(2)
   var expected = trim`
-    match(p:person {id: {id}}) optional match(p)<-[:friend]->(f:friend {}) optional match(f)<-[:friend]->(foff:friend {}) optional match(foff)<-[:friend]->(foffoff:friend {})
-    return id(p) as __pid, p.name, id(f) as __fid, f.name, id(foff) as __foffid, foff.name, id(foffoff) as __foffoffid, foffoff.name
+    match(p:person {id: {id}}) optional match(p)<-[:friend]->(f:friend) optional match(f)<-[:friend]->(foff:friend) optional match(foff)<-[:friend]->(foffoff:friend)
+    return *
   `
   parse(`
     person(id: <id>) as p {
       name,
-      friend(edge: ":friend") as f {
+      friend(relationship: ":friend") as f {
         name,
-        friend(edge: ":friend") as foff{
+        friend(relationship: ":friend") as foff{
           name,
-          friend(edge: ":friend") as foffoff{
+          friend(relationship: ":friend") as foffoff{
             name
           }
         }
@@ -61,19 +61,19 @@ tape('deep query', (t) => {
 tape('root edges', (t) => {
   t.plan(2)
   var expected = trim`
-    match(r:root {}) optional match(r)<-[:child]->(c1:child {}) optional match(c1)<-[:child]->(c1c1:child {}) optional match(r)<-[:child]->(c2:child {})
-    return id(r) as __rid, r.name, id(c1) as __c1id, c1.name, id(c1c1) as __c1c1id, c1c1.name, id(c2) as __c2id, c2.name
+    match(r:root) optional match(r)<-[:child]->(c1:child) optional match(c1)<-[:child]->(c1c1:child) optional match(r)<-[:child]->(c2:child)
+    return *
   `
   parse(`
     root() as r {
       name,
-      child(edge: ":child") as c1 {
+      child(relationship: ":child") as c1 {
         name,
-        child(edge: ":child") as c1c1 {
+        child(relationship: ":child") as c1c1 {
           name
         }
       },
-      child(edge: ":child") as c2 {
+      child(relationship: ":child") as c2 {
         name
       }
     }
@@ -92,7 +92,7 @@ tape('fields must be specified', (t) => {
   })
 })
 
-tape('edges must be specified', (t) => {
+tape('relationship must be specified', (t) => {
   t.plan(1)
   parse(`
     root() {
@@ -101,7 +101,7 @@ tape('edges must be specified', (t) => {
       }
     }
   `, (err) => {
-    t.equals(err.message, 'missing edge parameter for child')
+    t.equals(err.message, 'missing relationship parameter for child')
   })
 })
 
@@ -109,7 +109,7 @@ tape('cannot have duplicate names', (t) => {
   t.plan(1)
   parse(`
     root() {
-      root(edge: "x") {
+      root(relationship: "x") {
         x
       }
     }
@@ -117,6 +117,25 @@ tape('cannot have duplicate names', (t) => {
     t.equals(x.message, 'duplicate root please use as to alias')
   }
  )
+})
+
+tape('multiple parameters', (t) => {
+  t.plan(2)
+  var expected = trim`
+    match(root:root {id: {id}, name: {name}, prop: 42, prop2: \'42\'}) optional match(root)<-[child]->(child:child {childId: {childId}, name: {name}, prop: 42, prop2: \'42\'})
+          return *
+  `
+  parse(`
+    root(id: <id>, name: <name>, prop: 42, prop2: "42") {
+      field,
+      child(relationship: "child", childId: <childId>, name: <name>, prop: 42, prop2: "42") {
+        field
+      }
+    }
+  `, (err, r) => {
+    t.error(err)
+    t.equals(r.cql, expected)
+  })
 })
 
 tape('reduce simple test', (t) => {
@@ -181,9 +200,9 @@ tape('reduce simple test', (t) => {
   parse(`
     person() as p {
     name,
-    beer(edge: ":likes") {
+    beer(relationship: ":likes") {
       name,
-      award(edge: ":award") as awards {
+      award(relationship: ":award") as awards {
         name
       }
     }

@@ -14,6 +14,8 @@ function parse (query, cb) {
     return cb(err)
   }
 
+  if (!json.fields.length) return error('no fields specified')
+
   var tokens = []
 
   parseEntity(json, json, json.name)
@@ -30,13 +32,7 @@ function parse (query, cb) {
     return map(part).join(delimiter)
   }
 
-  var match = join('match', ' ')
-  var fields = join('return', ', ')
-
-  if (!map('return').length) return error('no fields specified')
-
-  var cql = match
-  cql += '\nreturn ' + fields
+  var cql = `${join('match', ' ')}\nreturn *`
 
   return cb(null, {
     cql: cql,
@@ -53,20 +49,21 @@ function parse (query, cb) {
     var parentName = null
 
     if (root !== parent) {
-      var edge = root.params.filter((x) => x.name === 'edge')[0]
-      if (!edge) return error(`missing edge parameter for ${name}`)
+      var relationship = root.params.filter((x) => x.name === 'relationship')[0]
+      if (!relationship) return error(`missing relationship parameter for ${name}`)
       parentName = parent.alias || parent.name
-      match = `optional match(${parentName})<-[${edge.value.value}]->(${alias}:${name} {})`
+      match = `optional match(${parentName})<-[${relationship.value.value}]->(${alias}:${name})`
     } else {
-      match = `match(${alias}:${name} {})`
+      match = `match(${alias}:${name})`
     }
 
     var entity = {
       name: name,
       alias: alias,
       match: match,
-      parent: parentName,
-      return: ''
+      matchFragment: match,
+      matchParameters: [],
+      parent: parentName
     }
 
     if (tokens.filter((x) => x.alias === alias).length) return error(`duplicate ${alias} please use as to alias`)
@@ -75,21 +72,14 @@ function parse (query, cb) {
     ;(root.params).forEach((item) => {
       var key = item.name
       var value = item.value.type === 'Literal' ? item.value.value : `{${item.value.name}}`
-      if (key === 'edge') return
-      entity.match = entity.match.slice(0, -2) + `${key}: ${parameterValue(value)}` + '})'
+      if (key === 'relationship') return
+      entity.matchParameters.push(`${key}: ${parameterValue(value)}`)
+      entity.match = `${entity.matchFragment.slice(0, -1)} {${entity.matchParameters.join(', ')}})`
     })
 
-    if (root.fields.length) {
-      entity.return = `id(${alias}) as __${alias}id`
-    }
-
     ;(root.fields).forEach((item) => {
-      var key = item.name
       if (item.fields.length) {
         parseEntity(item, root)
-      } else {
-        if (entity.return.length) entity.return += ', '
-        entity.return += `${entity.alias}.${key}`
       }
     })
   }
