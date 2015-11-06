@@ -71,20 +71,27 @@ function parse (query, cb) {
 
     ;(root.params).forEach((item) => {
       var key = item.name
-      var value = item.value.type === 'Literal' ? item.value.value : `{${item.value.name}}`
       if (key === 'relationship') return
-      entity.matchParameters.push(`${key}: ${parameterValue(value)}`)
+      entity.matchParameters.push(`${key}: ${param(item.value)}`)
       entity.match = `${entity.matchFragment.slice(0, -1)} {${entity.matchParameters.join(', ')}})`
     })
 
-    ;(root.fields).forEach((item) => {
+    ;(root.fields).forEach(parseField)
+
+    function parseProperties (properties) {
+      properties.fields.forEach(parseField)
+    }
+
+    function parseField (item) {
+      if (item.name === 'properties') return parseProperties(item)
       if (item.fields.length) {
         parseEntity(item, root)
       }
-    })
+    }
   }
 }
 
-function parameterValue (value) {
+function param (item) {
+  var value = item.type === 'Literal' ? item.value : `{${item.name}}`
   return typeof value === 'string' && value[0] !== '{' ? `'${value}'` : value
 }
