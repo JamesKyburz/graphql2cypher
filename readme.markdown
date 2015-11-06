@@ -13,9 +13,13 @@ tape('user entity with address', (t) => {
   t.plan(2)
   parse(`
     user(id: <id>) {
-      name,
-      address(edge: ":address", addressId: <addressId>) {
-        line
+      properties {
+        name,
+        address(edge: ":address", addressId: <addressId>) {
+          properties {
+            line
+          }
+        }
       }
     }
   `, (err, r) => {
@@ -24,7 +28,7 @@ tape('user entity with address', (t) => {
   })
   var expected = `
     match(user:user {id: {id}}) optional match(user)<-[:address]->(address:address {addressId: {addressId}})
-    return id(user) as __userid, user.name, id(address) as __addressid, address.line
+    return *
   `
 })
 ```
