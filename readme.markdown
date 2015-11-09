@@ -33,7 +33,8 @@ tape('user entity with address', (t) => {
 })
 ```
 
-# reduce to see how it looks check out [fixtures](https://github.com/JamesKyburz/graphql2cypher/blob/master/test/fixtures.js)
+To see how reduce works to see how it looks check out [fixtures](https://github.com/JamesKyburz/graphql2cypher/blob/master/test/fixtures.js),
+It works together with the module [cypherquery](https://github.com/JamesKyburz/cypherquery)
 
 # relationships, labels and graph
 
