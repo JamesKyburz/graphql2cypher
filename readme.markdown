@@ -33,6 +33,47 @@ tape('user entity with address', (t) => {
 })
 ```
 
+# reduce to see how it looks check out [fixtures](https://github.com/JamesKyburz/graphql2cypher/blob/master/test/fixtures.js)
+
+# relationships, labels and graph
+
+This requires that the statement sent to cypher has `resultType` `['row', 'graph']`]
+
+# relationships
+
+You can ask for relationships in graphql
+
+```javascript
+`
+    user(id: <id>) {
+      relationships,
+      ...
+`
+```
+
+# labels
+
+You can ask for labels in graphql
+
+```javascript
+`
+    user(id: <id>) {
+      labels
+      ...
+`
+```
+
+# graph
+You can ask for the raw graph as returned by cypher
+
+```javascript
+`
+    user(id: <id>) {
+      graph
+      ...
+`
+```
+
 # install
 
 With [npm](https://npmjs.org) do:
