@@ -279,6 +279,350 @@ tape('reduce peter with labels', (t) => {
   })
 })
 
+tape('reduce peter with labels and relationships', (t) => {
+  t.plan(2)
+  var results = fixtures.peterOK
+  var expected = [{
+    'properties': {
+      'name': 'Peter'
+    },
+    'labels': [
+      'person'
+    ],
+    'id': 3757,
+    'relationships': [
+      {
+        'id': '28',
+        'type': 'likes',
+        'startNode': '3757',
+        'endNode': '3758',
+        'properties': {}
+      }
+    ],
+    'beer': [
+      {
+        'properties': {
+          'name': 'IPA XX'
+        },
+        'labels': [
+          'beer',
+          'beverage'
+        ],
+        'id': 3758,
+        'relationships': [],
+        'awards': [
+          {
+            'properties': {
+              'name': 'Best beer 2014'
+            },
+            'labels': [
+              'award'
+            ],
+            'id': 3759,
+            'relationships': [
+              {
+                'id': '30',
+                'type': 'award',
+                'startNode': '3759',
+                'endNode': '3758',
+                'properties': {}
+              }
+            ]
+          },
+          {
+            'properties': {
+              'name': 'Best beer 2015'
+            },
+            'labels': [
+              'award'
+            ],
+            'id': 3760,
+            'relationships': [
+              {
+                'id': '31',
+                'type': 'award',
+                'startNode': '3760',
+                'endNode': '3758',
+                'properties': {}
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }]
+
+  parse(`
+    person() as p {
+      labels,
+      relationships,
+      properties {
+        name,
+        beer(relationship: ":likes") {
+          labels,
+          relationships,
+          properties {
+            name,
+            award(relationship: ":award") as awards {
+              labels,
+              relationships,
+              properties {
+                name
+              }
+            }
+          }
+        }
+      }
+  }`, (err, r) => {
+    t.error(err)
+    t.deepEqual(r.reduce(results), expected)
+  })
+})
+
+tape('reduce peter with graph', (t) => {
+  t.plan(2)
+  var results = fixtures.peterOK
+  var expected = [{
+    'properties': {
+      'name': 'Peter'
+    },
+    'labels': [
+      'person'
+    ],
+    'id': 3757,
+    'relationships': [
+      {
+        'id': '28',
+        'type': 'likes',
+        'startNode': '3757',
+        'endNode': '3758',
+        'properties': {}
+      }
+    ],
+    'graphs': [
+      {
+        'nodes': [
+          {
+            'id': '3757',
+            'labels': [
+              'person'
+            ],
+            'properties': {
+              'name': 'Peter'
+            }
+          },
+          {
+            'id': '3758',
+            'labels': [
+              'beer',
+              'beverage'
+            ],
+            'properties': {
+              'name': 'IPA XX'
+            }
+          },
+          {
+            'id': '3759',
+            'labels': [
+              'award'
+            ],
+            'properties': {
+              'name': 'Best beer 2014'
+            }
+          }
+        ],
+        'relationships': [
+          {
+            'id': '28',
+            'type': 'likes',
+            'startNode': '3757',
+            'endNode': '3758',
+            'properties': {}
+          },
+          {
+            'id': '30',
+            'type': 'award',
+            'startNode': '3759',
+            'endNode': '3758',
+            'properties': {}
+          }
+        ]
+      },
+      {
+        'nodes': [
+          {
+            'id': '3760',
+            'labels': [
+              'award'
+            ],
+            'properties': {
+              'name': 'Best beer 2015'
+            }
+          },
+          {
+            'id': '3757',
+            'labels': [
+              'person'
+            ],
+            'properties': {
+              'name': 'Peter'
+            }
+          },
+          {
+            'id': '3758',
+            'labels': [
+              'beer',
+              'beverage'
+            ],
+            'properties': {
+              'name': 'IPA XX'
+            }
+          }
+        ],
+        'relationships': [
+          {
+            'id': '28',
+            'type': 'likes',
+            'startNode': '3757',
+            'endNode': '3758',
+            'properties': {}
+          },
+          {
+            'id': '31',
+            'type': 'award',
+            'startNode': '3760',
+            'endNode': '3758',
+            'properties': {}
+          }
+        ]
+      }
+    ],
+    'graph': {
+      'labels': [
+        'person'
+      ],
+      'relationships': [
+        {
+          'id': '28',
+          'type': 'likes',
+          'startNode': '3757',
+          'endNode': '3758',
+          'properties': {}
+        }
+      ]
+    },
+    'beer': [
+      {
+        'properties': {
+          'name': 'IPA XX'
+        },
+        'labels': [
+          'beer',
+          'beverage'
+        ],
+        'id': 3758,
+        'relationships': [],
+        'graph': {
+          'labels': [
+            'beer',
+            'beverage'
+          ],
+          'relationships': []
+        },
+        'awards': [
+          {
+            'properties': {
+              'name': 'Best beer 2014'
+            },
+            'labels': [
+              'award'
+            ],
+            'id': 3759,
+            'relationships': [
+              {
+                'id': '30',
+                'type': 'award',
+                'startNode': '3759',
+                'endNode': '3758',
+                'properties': {}
+              }
+            ],
+            'graph': {
+              'labels': [
+                'award'
+              ],
+              'relationships': [
+                {
+                  'id': '30',
+                  'type': 'award',
+                  'startNode': '3759',
+                  'endNode': '3758',
+                  'properties': {}
+                }
+              ]
+            }
+          },
+          {
+            'properties': {
+              'name': 'Best beer 2015'
+            },
+            'labels': [
+              'award'
+            ],
+            'id': 3760,
+            'relationships': [
+              {
+                'id': '31',
+                'type': 'award',
+                'startNode': '3760',
+                'endNode': '3758',
+                'properties': {}
+              }
+            ],
+            'graph': {
+              'labels': [
+                'award'
+              ],
+              'relationships': [
+                {
+                  'id': '31',
+                  'type': 'award',
+                  'startNode': '3760',
+                  'endNode': '3758',
+                  'properties': {}
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  }]
+
+  parse(`
+    person() as p {
+      graph,
+      properties {
+        name,
+        beer(relationship: ":likes") {
+          graph,
+          properties {
+            name,
+            award(relationship: ":award") as awards {
+              graph,
+              properties {
+                name
+              }
+            }
+          }
+        }
+      }
+  }`, (err, r) => {
+    t.error(err)
+    t.deepEqual(r.reduce(results), expected)
+  })
+})
+
 function trim (strings) {
   var cql = strings.join('')
   return cql.split(/\n/g).filter(Boolean).slice(0, -1).map((x) => x.replace(/^\s*/g, '')).join('\n')

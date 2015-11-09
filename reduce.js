@@ -13,15 +13,28 @@ function reduce (tokens) {
     var graphs = results.data.map(x => x.graph)
     var added = {}
     var graph = graphs.reduce((sum, item) => {
-      item = item || { nodes: [] }
+      item = item || { nodes: [], relationships: [] }
       item.nodes.forEach(node => {
         sum[node.id] = {
           labels: node.labels,
-          relationships: node.relationships
+          relationships: []
         }
       })
       return sum
     }, {})
+
+    graphs.forEach(item => {
+      if (!item.relationships) return
+      item.relationships.forEach(relationship => {
+        var start = graph[relationship.startNode]
+        var end = graph[relationship.startNode]
+        add(start)
+        add(end)
+        function add (type) {
+          if (type && !type.relationships.filter(x => x.id === relationship.id).length) type.relationships.push(relationship)
+        }
+      })
+    })
 
     var nodes = tokens.reduce((sum, token) => {
       sum[token.alias] = token
@@ -43,10 +56,6 @@ function reduce (tokens) {
               properties: {}
             }
             var node = nodes[entity]
-            var meta = graph[id]
-            if (node.labels && meta) {
-              data.labels = meta.labels
-            }
             if (node.parent) {
               entityPointer[node.parent][entity] = entityPointer[node.parent][entity] || []
               entityPointer[node.parent][entity].push(data)
@@ -62,6 +71,19 @@ function reduce (tokens) {
               if (part[0] !== entity) continue
               value = row[k]
               if (value != null) data.properties[part[1]] = value
+            }
+            var meta = graph[id]
+            if (/labels|graph/.test(node.meta) && meta) {
+              data.labels = meta.labels
+            }
+            if (/relationships|graph/.test(node.meta) && meta) {
+              data.id = id
+              data.relationships = meta.relationships
+            }
+            if (/graph/.test(node.meta) && meta) {
+              result[tokens[0].alias][0].graphs = graphs
+              data.id = id
+              data.graph = meta
             }
             if (!Object.keys(data.properties).length && node.parent) {
               entityPointer[node.parent][entity].pop()
