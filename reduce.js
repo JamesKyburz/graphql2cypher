@@ -92,6 +92,7 @@ function reduce (tokens) {
         }
       }
     }
+    console.log(JSON.stringify(result[tokens[0].alias], 0, 2))
     return result[tokens[0].alias]
   }
 }
