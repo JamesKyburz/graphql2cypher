@@ -24,7 +24,100 @@ exports.peterNoLabels =
   ]
 }]
 
-exports.peterLabelsAndRelationShips =
+exports.peterLabelsAndRelationships =
+[{
+  'properties': {
+    'name': 'Peter'
+  },
+  'labels': [
+    'person'
+  ],
+  'id': 3757,
+  'relationships': [
+    {
+      'id': '28',
+      'type': 'likes',
+      'startNode': '3757',
+      'endNode': '3758',
+      'properties': {}
+    }
+  ],
+  'beer': [
+    {
+      'properties': {
+        'name': 'IPA XX'
+      },
+      'labels': [
+        'beer',
+        'beverage'
+      ],
+      'id': 3758,
+      'relationships': [
+        {
+          'id': '28',
+          'type': 'likes',
+          'startNode': '3757',
+          'endNode': '3758',
+          'properties': {}
+        },
+        {
+          'id': '30',
+          'type': 'award',
+          'startNode': '3759',
+          'endNode': '3758',
+          'properties': {}
+        },
+        {
+          'id': '31',
+          'type': 'award',
+          'startNode': '3760',
+          'endNode': '3758',
+          'properties': {}
+        }
+      ],
+      'awards': [
+        {
+          'properties': {
+            'name': 'Best beer 2014'
+          },
+          'labels': [
+            'award'
+          ],
+          'id': 3759,
+          'relationships': [
+            {
+              'id': '30',
+              'type': 'award',
+              'startNode': '3759',
+              'endNode': '3758',
+              'properties': {}
+            }
+          ]
+        },
+        {
+          'properties': {
+            'name': 'Best beer 2015'
+          },
+          'labels': [
+            'award'
+          ],
+          'id': 3760,
+          'relationships': [
+            {
+              'id': '31',
+              'type': 'award',
+              'startNode': '3760',
+              'endNode': '3758',
+              'properties': {}
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}]
+
+exports.peterLabelsOnly =
 [{
   'labels': ['person'],
   'properties': {
