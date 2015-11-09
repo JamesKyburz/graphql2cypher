@@ -30,13 +30,12 @@ function parse (query, cb) {
     return map(part).join(delimiter)
   }
 
-  var match = join('match', ' ')
   var fields = join('return', ', ')
+  var match = join('match', ' ')
 
   if (!map('return').length) return error('no fields specified')
 
-  var cql = match
-  cql += '\nreturn ' + fields
+  var cql = `${match}\nreturn ${fields}`
 
   return cb(null, {
     cql: cql,
@@ -53,20 +52,26 @@ function parse (query, cb) {
     var parentName = null
 
     if (root !== parent) {
-      var edge = root.params.filter((x) => x.name === 'edge')[0]
-      if (!edge) return error(`missing edge parameter for ${name}`)
+      var relationship = root.params.filter((x) => x.name === 'relationship')[0]
+      if (!relationship) return error(`missing relationship parameter for ${name}`)
+      var relationshipValue = relationship.value.value
+      if (relationshipValue === '*') relationshipValue = ''
+      relationshipValue = `__${alias}r${relationshipValue}`
       parentName = parent.alias || parent.name
-      match = `optional match(${parentName})<-[${edge.value.value}]->(${alias}:${name} {})`
+      match = `optional match(${parentName})<-[${relationshipValue}]->(${alias}:${name})`
     } else {
-      match = `match(${alias}:${name} {})`
+      match = `match(${alias}:${name})`
     }
 
     var entity = {
+      meta: '',
       name: name,
       alias: alias,
       match: match,
-      parent: parentName,
-      return: ''
+      matchFragment: match,
+      matchParameters: [],
+      properties: [],
+      parent: parentName
     }
 
     if (tokens.filter((x) => x.alias === alias).length) return error(`duplicate ${alias} please use as to alias`)
@@ -74,27 +79,34 @@ function parse (query, cb) {
 
     ;(root.params).forEach((item) => {
       var key = item.name
-      var value = item.value.type === 'Literal' ? item.value.value : `{${item.value.name}}`
-      if (key === 'edge') return
-      entity.match = entity.match.slice(0, -2) + `${key}: ${parameterValue(value)}` + '})'
+      if (key === 'relationship') return
+      entity.matchParameters.push(`${key}: ${param(item.value)}`)
+      entity.match = `${entity.matchFragment.slice(0, -1)} {${entity.matchParameters.join(', ')}})`
     })
 
-    if (root.fields.length) {
-      entity.return = `id(${alias}) as __${alias}id`
+    ;(root.fields).forEach(parseField)
+
+    function parseProperties (properties) {
+      properties.fields.forEach(parseField)
     }
 
-    ;(root.fields).forEach((item) => {
-      var key = item.name
+    function parseField (item) {
+      if (item.name === 'properties') return parseProperties(item)
+      if (item.name === 'labels') entity.meta += '|labels'
+      if (item.name === 'relationships') entity.meta += '|relationships'
+      if (item.name === 'graph') entity.meta += '|graph'
       if (item.fields.length) {
         parseEntity(item, root)
       } else {
-        if (entity.return.length) entity.return += ', '
-        entity.return += `${entity.alias}.${key}`
+        entity.properties.push(`${alias}.${item.name}`)
+        var relationShip = entity.parent ? `, __${alias}r` : ''
+        entity.return = `id(${alias}) as __${alias}id, ${entity.properties.join(', ')}${relationShip}`
       }
-    })
+    }
   }
 }
 
-function parameterValue (value) {
+function param (item) {
+  var value = item.type === 'Literal' ? item.value : `{${item.name}}`
   return typeof value === 'string' && value[0] !== '{' ? `'${value}'` : value
 }

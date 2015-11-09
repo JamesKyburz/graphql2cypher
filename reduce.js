@@ -9,9 +9,34 @@ function reduce (tokens) {
     if (!results.results.length) return results
     results = results.results[0]
     var columns = results.columns
-    var rows = results.data.map((x) => x.row)
+    var rows = results.data.map(x => x.row)
+    var graphs = results.data.map(x => x.graph)
     var added = {}
-    var edges = tokens.reduce((sum, token) => {
+    var graph = graphs.reduce((sum, item) => {
+      item = item || { nodes: [], relationships: [] }
+      item.nodes.forEach(node => {
+        sum[node.id] = {
+          labels: node.labels,
+          relationships: []
+        }
+      })
+      return sum
+    }, {})
+
+    graphs.forEach(item => {
+      if (!item.relationships) return
+      item.relationships.forEach(relationship => {
+        var start = graph[relationship.startNode]
+        var end = graph[relationship.endNode]
+        add(start)
+        add(end)
+        function add (type) {
+          if (type && !type.relationships.filter(x => x.id === relationship.id).length) type.relationships.push(relationship)
+        }
+      })
+    })
+
+    var nodes = tokens.reduce((sum, token) => {
       sum[token.alias] = token
       token.results = []
       return sum
@@ -25,12 +50,15 @@ function reduce (tokens) {
         if (/__.*id$/.test(column)) {
           var entity = column.slice(2, -2)
           if (!row[j]) row[j] = nulls++
-          if (!added[row[j]]) {
-            var data = {}
-            var edge = edges[entity]
-            if (edge.parent) {
-              entityPointer[edge.parent][entity] = entityPointer[edge.parent][entity] || []
-              entityPointer[edge.parent][entity].push(data)
+          var id = row[j]
+          if (!added[id]) {
+            var data = {
+              properties: {}
+            }
+            var node = nodes[entity]
+            if (node.parent) {
+              entityPointer[node.parent][entity] = entityPointer[node.parent][entity] || []
+              entityPointer[node.parent][entity].push(data)
               entityPointer[entity] = data
             } else {
               result[entity] = result[entity] || []
@@ -42,16 +70,29 @@ function reduce (tokens) {
               var part = key.split('.')
               if (part[0] !== entity) continue
               value = row[k]
-              if (value != null) data[part[1]] = value
+              if (value != null) data.properties[part[1]] = value
             }
-            if (!Object.keys(data).length && edge.parent) {
-              entityPointer[edge.parent][entity].pop()
+            var meta = graph[id]
+            if (/labels|graph/.test(node.meta) && meta) {
+              data.labels = meta.labels
+            }
+            if (/relationships|graph/.test(node.meta) && meta) {
+              data.id = id
+              data.relationships = meta.relationships
+            }
+            if (/graph/.test(node.meta) && meta) {
+              result[tokens[0].alias][0].graphs = graphs
+              data.id = id
+            }
+            if (!Object.keys(data.properties).length && node.parent) {
+              entityPointer[node.parent][entity].pop()
             }
           }
           added[row[j]] = true
         }
       }
     }
+    console.log(JSON.stringify(result[tokens[0].alias], 0, 2))
     return result[tokens[0].alias]
   }
 }

@@ -1,14 +1,22 @@
 var tape = require('tape')
+var fixtures = require('./fixtures')
 
 var parse = require('../')
 
-tape('user entity with 1 field', (t) => {
+tape('test entity with 1 field', (t) => {
   t.plan(2)
   var expected = trim`
     match(user:user {id: {id}})
     return id(user) as __userid, user.name
   `
-  parse(`user(id: <id>) { name }`, (err, r) => {
+
+  parse(`
+    user(id: <id>) {
+      properties {
+        name
+      }
+    }
+  `, (err, r) => {
     t.error(err)
     t.equals(r.cql, expected)
   })
@@ -17,14 +25,18 @@ tape('user entity with 1 field', (t) => {
 tape('user entity with address', (t) => {
   t.plan(2)
   var expected = trim`
-    match(user:user {id: {id}}) optional match(user)<-[:address]->(address:address {addressId: {addressId}})
-    return id(user) as __userid, user.name, id(address) as __addressid, address.line
+    match(user:user {id: {id}}) optional match(user)<-[__addressr:address]->(address:address {addressId: {addressId}})
+    return id(user) as __userid, user.name, id(address) as __addressid, address.line, __addressr
   `
   parse(`
     user(id: <id>) {
-      name,
-      address(edge: ":address", addressId: <addressId>) {
-        line
+      properties {
+        name,
+        address(relationship: ":address", addressId: <addressId>) {
+          properties {
+            line
+          }
+        }
       }
     }
   `, (err, r) => {
@@ -36,18 +48,24 @@ tape('user entity with address', (t) => {
 tape('deep query', (t) => {
   t.plan(2)
   var expected = trim`
-    match(p:person {id: {id}}) optional match(p)<-[:friend]->(f:friend {}) optional match(f)<-[:friend]->(foff:friend {}) optional match(foff)<-[:friend]->(foffoff:friend {})
-    return id(p) as __pid, p.name, id(f) as __fid, f.name, id(foff) as __foffid, foff.name, id(foffoff) as __foffoffid, foffoff.name
+    match(p:person {id: {id}}) optional match(p)<-[__fr:friend]->(f:friend) optional match(f)<-[__foffr:friend]->(foff:friend) optional match(foff)<-[__foffoffr:friend]->(foffoff:friend)
+    return id(p) as __pid, p.name, id(f) as __fid, f.name, __fr, id(foff) as __foffid, foff.name, __foffr, id(foffoff) as __foffoffid, foffoff.name, __foffoffr
   `
   parse(`
     person(id: <id>) as p {
-      name,
-      friend(edge: ":friend") as f {
+      properties {
         name,
-        friend(edge: ":friend") as foff{
-          name,
-          friend(edge: ":friend") as foffoff{
-            name
+        friend(relationship: ":friend") as f {
+          properties {
+            name,
+            friend(relationship: ":friend") as foff{
+              properties {
+                name,
+                friend(relationship: ":friend") as foffoff{
+                  name
+                }
+              }
+            }
           }
         }
       }
@@ -61,20 +79,28 @@ tape('deep query', (t) => {
 tape('root edges', (t) => {
   t.plan(2)
   var expected = trim`
-    match(r:root {}) optional match(r)<-[:child]->(c1:child {}) optional match(c1)<-[:child]->(c1c1:child {}) optional match(r)<-[:child]->(c2:child {})
-    return id(r) as __rid, r.name, id(c1) as __c1id, c1.name, id(c1c1) as __c1c1id, c1c1.name, id(c2) as __c2id, c2.name
+    match(r:root) optional match(r)<-[__c1r:child]->(c1:child) optional match(c1)<-[__c1c1r:child]->(c1c1:child) optional match(r)<-[__c2r:child]->(c2:child)
+    return id(r) as __rid, r.name, id(c1) as __c1id, c1.name, __c1r, id(c1c1) as __c1c1id, c1c1.name, __c1c1r, id(c2) as __c2id, c2.name, __c2r
   `
   parse(`
     root() as r {
-      name,
-      child(edge: ":child") as c1 {
+      properties {
         name,
-        child(edge: ":child") as c1c1 {
-          name
+        child(relationship: ":child") as c1 {
+          properties {
+            name,
+            child(relationship: ":child") as c1c1 {
+              properties {
+                name
+              }
+            }
+          }
+        },
+        child(relationship: ":child") as c2 {
+          properties {
+            name
+          }
         }
-      },
-      child(edge: ":child") as c2 {
-        name
       }
     }
   `, (err, r) => {
@@ -92,16 +118,20 @@ tape('fields must be specified', (t) => {
   })
 })
 
-tape('edges must be specified', (t) => {
+tape('relationship must be specified', (t) => {
   t.plan(1)
   parse(`
     root() {
-      child() {
-        x
+      properties {
+        child() {
+          properties {
+            x
+          }
+        }
       }
     }
   `, (err) => {
-    t.equals(err.message, 'missing edge parameter for child')
+    t.equals(err.message, 'missing relationship parameter for child')
   })
 })
 
@@ -109,8 +139,12 @@ tape('cannot have duplicate names', (t) => {
   t.plan(1)
   parse(`
     root() {
-      root(edge: "x") {
-        x
+      properties {
+        root(relationship: "x") {
+          properties {
+            x
+          }
+        }
       }
     }
   `, (x) => {
@@ -119,77 +153,138 @@ tape('cannot have duplicate names', (t) => {
  )
 })
 
-tape('reduce simple test', (t) => {
+tape('multiple parameters', (t) => {
   t.plan(2)
-  var results =
-    {
-      'results': [
-        {
-          'columns': [
-            '__pid',
-            'p.name',
-            '__beerid',
-            'beer.name',
-            '__awardsid',
-            'awards.name'
-          ],
-          'data': [
-            {
-              'row': [
-                3265,
-                'Peter',
-                3266,
-                'IPA XX',
-                3267,
-                'Best beer 2014'
-              ]
-            },
-            {
-              'row': [
-                3265,
-                'Peter',
-                3266,
-                'IPA XX',
-                3268,
-                'Best beer 2015'
-              ]
-            }
-          ]
-        }
-      ],
-      'errors': []
-    }
-  var expected =
-    [
-      {
-        'name': 'Peter',
-        'beer': [
-          {
-            'name': 'IPA XX',
-            'awards': [
-              {
-                'name': 'Best beer 2014'
-              },
-              {
-                'name': 'Best beer 2015'
-              }
-            ]
+  var expected = trim`
+    match(root:root {id: {id}, name: {name}, prop: 42, prop2: \'42\'}) optional match(root)<-[__childrchild]->(child:child {childId: {childId}, name: {name}, prop: 42, prop2: \'42\'})
+    return id(root) as __rootid, root.field, id(child) as __childid, child.field, __childr
+  `
+  parse(`
+    root(id: <id>, name: <name>, prop: 42, prop2: "42") {
+      properties {
+        field,
+        child(relationship: "child", childId: <childId>, name: <name>, prop: 42, prop2: "42") {
+          properties {
+            field
           }
-        ]
+        }
       }
-    ]
+    }
+  `, (err, r) => {
+    t.error(err)
+    t.equals(r.cql, expected)
+  })
+})
+
+tape('reduce peter with no labels or relationships', (t) => {
+  t.plan(2)
+  var results = fixtures.peterOK
+  var expected = fixtures.peterNoLabels
   parse(`
     person() as p {
-    name,
-    beer(edge: ":likes") {
-      name,
-      award(edge: ":award") as awards {
-        name
+      properties {
+        name,
+        beer(relationship: ":likes") {
+          properties {
+            name,
+            award(relationship: ":award") as awards {
+              properties {
+                name
+              }
+            }
+          }
+        }
       }
-    }
   }`, (err, r) => {
     t.error(err)
-    t.deepEqual(expected, r.reduce(results))
+    t.deepEqual(r.reduce(results), expected)
+  })
+})
+
+tape('reduce peter with labels', (t) => {
+  t.plan(2)
+  var results = fixtures.peterOK
+  var expected = fixtures.peterLabelsOnly
+  parse(`
+    person() as p {
+      labels,
+      properties {
+        name,
+        beer(relationship: ":likes") {
+          labels,
+          properties {
+            name,
+            award(relationship: ":award") as awards {
+              labels,
+              properties {
+                name
+              }
+            }
+          }
+        }
+      }
+  }`, (err, r) => {
+    t.error(err)
+    t.deepEqual(r.reduce(results), expected)
+  })
+})
+
+tape('reduce peter with labels and relationships', (t) => {
+  t.plan(2)
+  var results = fixtures.peterOK
+  var expected = fixtures.peterLabelsAndRelationships
+  parse(`
+    person() as p {
+      labels,
+      relationships,
+      properties {
+        name,
+        beer(relationship: ":likes") {
+          labels,
+          relationships,
+          properties {
+            name,
+            award(relationship: ":award") as awards {
+              labels,
+              relationships,
+              properties {
+                name
+              }
+            }
+          }
+        }
+      }
+  }`, (err, r) => {
+    t.error(err)
+    t.deepEqual(r.reduce(results), expected)
+  })
+})
+
+tape('reduce peter with graph', (t) => {
+  t.plan(2)
+  var results = fixtures.peterOK
+  var expected = fixtures.peterGraph
+  parse(`
+    person() as p {
+      graph,
+      properties {
+        name,
+        beer(relationship: ":likes") {
+          graph,
+          properties {
+            name,
+            award(relationship: ":award") as awards {
+              graph,
+              properties {
+                name
+              }
+            }
+          }
+        }
+      }
+  }`, (err, r) => {
+    t.error(err)
+    t.deepEqual(r.reduce(results), expected)
   })
 })
 

@@ -13,9 +13,13 @@ tape('user entity with address', (t) => {
   t.plan(2)
   parse(`
     user(id: <id>) {
-      name,
-      address(edge: ":address", addressId: <addressId>) {
-        line
+      properties {
+        name,
+        address(edge: ":address", addressId: <addressId>) {
+          properties {
+            line
+          }
+        }
       }
     }
   `, (err, r) => {
@@ -24,9 +28,51 @@ tape('user entity with address', (t) => {
   })
   var expected = `
     match(user:user {id: {id}}) optional match(user)<-[:address]->(address:address {addressId: {addressId}})
-    return id(user) as __userid, user.name, id(address) as __addressid, address.line
+    return *
   `
 })
+```
+
+To see how reduce works to see how it looks check out [fixtures](https://github.com/JamesKyburz/graphql2cypher/blob/master/test/fixtures.js),
+It works together with the module [cypherquery](https://github.com/JamesKyburz/cypherquery)
+
+# relationships, labels and graph
+
+This requires that the statement sent to cypher has `resultType` `['row', 'graph']`]
+
+# relationships
+
+You can ask for relationships in graphql
+
+```javascript
+`
+    user(id: <id>) {
+      relationships,
+      ...
+`
+```
+
+# labels
+
+You can ask for labels in graphql
+
+```javascript
+`
+    user(id: <id>) {
+      labels
+      ...
+`
+```
+
+# graph
+You can ask for the raw graph as returned by cypher
+
+```javascript
+`
+    user(id: <id>) {
+      graph
+      ...
+`
 ```
 
 # install
