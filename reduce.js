@@ -11,7 +11,7 @@ function reduce (tokens) {
     var columns = results.columns
     var rows = results.data.map((x) => x.row)
     var added = {}
-    var edges = tokens.reduce((sum, token) => {
+    var relationships = tokens.reduce((sum, token) => {
       sum[token.alias] = token
       token.results = []
       return sum
@@ -26,11 +26,13 @@ function reduce (tokens) {
           var entity = column.slice(2, -2)
           if (!row[j]) row[j] = nulls++
           if (!added[row[j]]) {
-            var data = {}
-            var edge = edges[entity]
-            if (edge.parent) {
-              entityPointer[edge.parent][entity] = entityPointer[edge.parent][entity] || []
-              entityPointer[edge.parent][entity].push(data)
+            var data = {
+              properties: {}
+            }
+            var relationship = relationships[entity]
+            if (relationship.parent) {
+              entityPointer[relationship.parent][entity] = entityPointer[relationship.parent][entity] || []
+              entityPointer[relationship.parent][entity].push(data)
               entityPointer[entity] = data
             } else {
               result[entity] = result[entity] || []
@@ -42,10 +44,10 @@ function reduce (tokens) {
               var part = key.split('.')
               if (part[0] !== entity) continue
               value = row[k]
-              if (value != null) data[part[1]] = value
+              if (value != null) data.properties[part[1]] = value
             }
-            if (!Object.keys(data).length && edge.parent) {
-              entityPointer[edge.parent][entity].pop()
+            if (!Object.keys(data.properties).length && relationship.parent) {
+              entityPointer[relationship.parent][entity].pop()
             }
           }
           added[row[j]] = true

@@ -7,7 +7,7 @@ tape('test entity with 1 field', (t) => {
   t.plan(2)
   var expected = trim`
     match(user:user {id: {id}})
-    return *
+    return id(user) as __userid, user.name
   `
 
   parse(`
@@ -25,8 +25,8 @@ tape('test entity with 1 field', (t) => {
 tape('user entity with address', (t) => {
   t.plan(2)
   var expected = trim`
-    match(user:user {id: {id}}) optional match(user)<-[:address]->(address:address {addressId: {addressId}})
-    return *
+    match(user:user {id: {id}}) optional match(user)<-[__addressr:address]->(address:address {addressId: {addressId}})
+    return id(user) as __userid, user.name, id(address) as __addressid, address.line, __addressr
   `
   parse(`
     user(id: <id>) {
@@ -48,8 +48,8 @@ tape('user entity with address', (t) => {
 tape('deep query', (t) => {
   t.plan(2)
   var expected = trim`
-    match(p:person {id: {id}}) optional match(p)<-[:friend]->(f:friend) optional match(f)<-[:friend]->(foff:friend) optional match(foff)<-[:friend]->(foffoff:friend)
-    return *
+    match(p:person {id: {id}}) optional match(p)<-[__fr:friend]->(f:friend) optional match(f)<-[__foffr:friend]->(foff:friend) optional match(foff)<-[__foffoffr:friend]->(foffoff:friend)
+    return id(p) as __pid, p.name, id(f) as __fid, f.name, __fr, id(foff) as __foffid, foff.name, __foffr, id(foffoff) as __foffoffid, foffoff.name, __foffoffr
   `
   parse(`
     person(id: <id>) as p {
@@ -79,8 +79,8 @@ tape('deep query', (t) => {
 tape('root edges', (t) => {
   t.plan(2)
   var expected = trim`
-    match(r:root) optional match(r)<-[:child]->(c1:child) optional match(c1)<-[:child]->(c1c1:child) optional match(r)<-[:child]->(c2:child)
-    return *
+    match(r:root) optional match(r)<-[__c1r:child]->(c1:child) optional match(c1)<-[__c1c1r:child]->(c1c1:child) optional match(r)<-[__c2r:child]->(c2:child)
+    return id(r) as __rid, r.name, id(c1) as __c1id, c1.name, __c1r, id(c1c1) as __c1c1id, c1c1.name, __c1c1r, id(c2) as __c2id, c2.name, __c2r
   `
   parse(`
     root() as r {
@@ -156,8 +156,8 @@ tape('cannot have duplicate names', (t) => {
 tape('multiple parameters', (t) => {
   t.plan(2)
   var expected = trim`
-    match(root:root {id: {id}, name: {name}, prop: 42, prop2: \'42\'}) optional match(root)<-[child]->(child:child {childId: {childId}, name: {name}, prop: 42, prop2: \'42\'})
-          return *
+    match(root:root {id: {id}, name: {name}, prop: 42, prop2: \'42\'}) optional match(root)<-[__childrchild]->(child:child {childId: {childId}, name: {name}, prop: 42, prop2: \'42\'})
+    return id(root) as __rootid, root.field, id(child) as __childid, child.field, __childr
   `
   parse(`
     root(id: <id>, name: <name>, prop: 42, prop2: "42") {
@@ -176,15 +176,15 @@ tape('multiple parameters', (t) => {
   })
 })
 
-tape('reduce peter with no labels', (t) => {
+tape.only('reduce peter with no labels', (t) => {
   t.plan(2)
   var results = fixtures.peterOK
   var expected =
     [
       {
-        'name': 'Peter',
-        'beer': [
-          {
+        'properties': {
+          'name': 'Peter',
+          'beer': {
             'properties': {
               'name': 'IPA XX',
               'awards': [{
@@ -198,7 +198,7 @@ tape('reduce peter with no labels', (t) => {
               }]
             }
           }
-        ]
+        }
       }
     ]
   parse(`
@@ -217,8 +217,9 @@ tape('reduce peter with no labels', (t) => {
         }
       }
   }`, (err, r) => {
+    console.log(r.cql)
     t.error(err)
-    t.deepEqual(expected, r.reduce(results))
+    t.deepEqual(r.reduce(results), expected)
   })
 })
 

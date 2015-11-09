@@ -14,8 +14,6 @@ function parse (query, cb) {
     return cb(err)
   }
 
-  if (!json.fields.length) return error('no fields specified')
-
   var tokens = []
 
   parseEntity(json, json, json.name)
@@ -32,7 +30,12 @@ function parse (query, cb) {
     return map(part).join(delimiter)
   }
 
-  var cql = `${join('match', ' ')}\nreturn *`
+  var fields = join('return', ', ')
+  var match = join('match', ' ')
+
+  if (!map('return').length) return error('no fields specified')
+
+  var cql = `${match}\nreturn ${fields}`
 
   return cb(null, {
     cql: cql,
@@ -51,8 +54,11 @@ function parse (query, cb) {
     if (root !== parent) {
       var relationship = root.params.filter((x) => x.name === 'relationship')[0]
       if (!relationship) return error(`missing relationship parameter for ${name}`)
+      var relationshipValue = relationship.value.value
+      if (relationshipValue === '*') relationshipValue = ''
+      relationshipValue = `__${alias}r${relationshipValue}`
       parentName = parent.alias || parent.name
-      match = `optional match(${parentName})<-[${relationship.value.value}]->(${alias}:${name})`
+      match = `optional match(${parentName})<-[${relationshipValue}]->(${alias}:${name})`
     } else {
       match = `match(${alias}:${name})`
     }
@@ -63,6 +69,7 @@ function parse (query, cb) {
       match: match,
       matchFragment: match,
       matchParameters: [],
+      properties: [],
       parent: parentName
     }
 
@@ -86,6 +93,10 @@ function parse (query, cb) {
       if (item.name === 'properties') return parseProperties(item)
       if (item.fields.length) {
         parseEntity(item, root)
+      } else {
+        entity.properties.push(`${alias}.${item.name}`)
+        var relationShip = entity.parent ? `, __${alias}r` : ''
+        entity.return = `id(${alias}) as __${alias}id, ${entity.properties.join(', ')}${relationShip}`
       }
     }
   }
