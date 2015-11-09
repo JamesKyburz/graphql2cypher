@@ -176,31 +176,33 @@ tape('multiple parameters', (t) => {
   })
 })
 
-tape.only('reduce peter with no labels', (t) => {
+tape('reduce peter with no labels or relationships', (t) => {
   t.plan(2)
   var results = fixtures.peterOK
-  var expected =
-    [
+  var expected = [{
+    'properties': {
+      'name': 'Peter'
+    },
+    'beer': [
       {
         'properties': {
-          'name': 'Peter',
-          'beer': {
+          'name': 'IPA XX'
+        },
+        'awards': [
+          {
             'properties': {
-              'name': 'IPA XX',
-              'awards': [{
-                'properties': {
-                  'name': 'Best beer 2014'
-                }
-              }, {
-                'properties': {
-                  'name': 'Best beer 2015'
-                }
-              }]
+              'name': 'Best beer 2014'
+            }
+          },
+          {
+            'properties': {
+              'name': 'Best beer 2015'
             }
           }
-        }
+        ]
       }
     ]
+  }]
   parse(`
     person() as p {
       properties {
@@ -217,7 +219,61 @@ tape.only('reduce peter with no labels', (t) => {
         }
       }
   }`, (err, r) => {
-    console.log(r.cql)
+    t.error(err)
+    t.deepEqual(r.reduce(results), expected)
+  })
+})
+
+tape('reduce peter with labels', (t) => {
+  t.plan(2)
+  var results = fixtures.peterOK
+  var expected = [{
+    'labels': ['person'],
+    'properties': {
+      'name': 'Peter'
+    },
+    'beer': [
+      {
+        'labels': ['beer', 'beverage'],
+        'properties': {
+          'name': 'IPA XX'
+        },
+        'awards': [
+          {
+            'labels': ['award'],
+            'properties': {
+              'name': 'Best beer 2014'
+            }
+          },
+          {
+            'labels': ['award'],
+            'properties': {
+              'name': 'Best beer 2015'
+            }
+          }
+        ]
+      }
+    ]
+  }]
+  parse(`
+    person() as p {
+      labels,
+      properties {
+        name,
+        beer(relationship: ":likes") {
+          labels,
+          properties {
+            name,
+            award(relationship: ":award") as awards {
+              labels,
+              properties {
+                name
+              }
+            }
+          }
+        }
+      }
+  }`, (err, r) => {
     t.error(err)
     t.deepEqual(r.reduce(results), expected)
   })

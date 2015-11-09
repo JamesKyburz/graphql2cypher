@@ -9,9 +9,21 @@ function reduce (tokens) {
     if (!results.results.length) return results
     results = results.results[0]
     var columns = results.columns
-    var rows = results.data.map((x) => x.row)
+    var rows = results.data.map(x => x.row)
+    var graphs = results.data.map(x => x.graph)
     var added = {}
-    var relationships = tokens.reduce((sum, token) => {
+    var graph = graphs.reduce((sum, item) => {
+      item = item || { nodes: [] }
+      item.nodes.forEach(node => {
+        sum[node.id] = {
+          labels: node.labels,
+          relationships: node.relationships
+        }
+      })
+      return sum
+    }, {})
+
+    var nodes = tokens.reduce((sum, token) => {
       sum[token.alias] = token
       token.results = []
       return sum
@@ -25,14 +37,19 @@ function reduce (tokens) {
         if (/__.*id$/.test(column)) {
           var entity = column.slice(2, -2)
           if (!row[j]) row[j] = nulls++
-          if (!added[row[j]]) {
+          var id = row[j]
+          if (!added[id]) {
             var data = {
               properties: {}
             }
-            var relationship = relationships[entity]
-            if (relationship.parent) {
-              entityPointer[relationship.parent][entity] = entityPointer[relationship.parent][entity] || []
-              entityPointer[relationship.parent][entity].push(data)
+            var node = nodes[entity]
+            var meta = graph[id]
+            if (node.labels && meta) {
+              data.labels = meta.labels
+            }
+            if (node.parent) {
+              entityPointer[node.parent][entity] = entityPointer[node.parent][entity] || []
+              entityPointer[node.parent][entity].push(data)
               entityPointer[entity] = data
             } else {
               result[entity] = result[entity] || []
@@ -46,8 +63,8 @@ function reduce (tokens) {
               value = row[k]
               if (value != null) data.properties[part[1]] = value
             }
-            if (!Object.keys(data.properties).length && relationship.parent) {
-              entityPointer[relationship.parent][entity].pop()
+            if (!Object.keys(data.properties).length && node.parent) {
+              entityPointer[node.parent][entity].pop()
             }
           }
           added[row[j]] = true

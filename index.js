@@ -64,6 +64,7 @@ function parse (query, cb) {
     }
 
     var entity = {
+      labels: false,
       name: name,
       alias: alias,
       match: match,
@@ -91,6 +92,7 @@ function parse (query, cb) {
 
     function parseField (item) {
       if (item.name === 'properties') return parseProperties(item)
+      if (item.name === 'labels') entity.labels = true
       if (item.fields.length) {
         parseEntity(item, root)
       } else {
