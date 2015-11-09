@@ -279,7 +279,7 @@ tape('reduce peter with labels', (t) => {
   })
 })
 
-tape('reduce peter with labels and relationships', (t) => {
+tape.only('reduce peter with labels and relationships', (t) => {
   t.plan(2)
   var results = fixtures.peterOK
   var expected = [{
@@ -309,7 +309,15 @@ tape('reduce peter with labels and relationships', (t) => {
           'beverage'
         ],
         'id': 3758,
-        'relationships': [],
+        'relationships': [
+          {
+            'id': '28',
+            'type': 'likes',
+            'startNode': '3757',
+            'endNode': '3758',
+            'properties': {}
+          }
+        ],
         'awards': [
           {
             'properties': {
@@ -521,14 +529,15 @@ tape('reduce peter with graph', (t) => {
           'beverage'
         ],
         'id': 3758,
-        'relationships': [],
-        'graph': {
-          'labels': [
-            'beer',
-            'beverage'
-          ],
-          'relationships': []
-        },
+        'relationships': [
+          {
+            'id': '28',
+            'type': 'likes',
+            'startNode': '3757',
+            'endNode': '3758',
+            'properties': {}
+          }
+        ],
         'awards': [
           {
             'properties': {
@@ -546,21 +555,7 @@ tape('reduce peter with graph', (t) => {
                 'endNode': '3758',
                 'properties': {}
               }
-            ],
-            'graph': {
-              'labels': [
-                'award'
-              ],
-              'relationships': [
-                {
-                  'id': '30',
-                  'type': 'award',
-                  'startNode': '3759',
-                  'endNode': '3758',
-                  'properties': {}
-                }
-              ]
-            }
+            ]
           },
           {
             'properties': {

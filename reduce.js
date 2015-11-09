@@ -27,7 +27,7 @@ function reduce (tokens) {
       if (!item.relationships) return
       item.relationships.forEach(relationship => {
         var start = graph[relationship.startNode]
-        var end = graph[relationship.startNode]
+        var end = graph[relationship.endNode]
         add(start)
         add(end)
         function add (type) {
@@ -83,7 +83,6 @@ function reduce (tokens) {
             if (/graph/.test(node.meta) && meta) {
               result[tokens[0].alias][0].graphs = graphs
               data.id = id
-              data.graph = meta
             }
             if (!Object.keys(data.properties).length && node.parent) {
               entityPointer[node.parent][entity].pop()
