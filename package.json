@@ -22,7 +22,7 @@
   "devDependencies": {
     "faucet": "0.0.1",
     "standard": "5.4.1",
-    "tape": "4.3.0",
+    "tape": "4.4.0",
     "watch": "0.17.1"
   },
   "engines": {
