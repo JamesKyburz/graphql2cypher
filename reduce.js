@@ -9,12 +9,12 @@ function reduce (tokens) {
     if (!results.results.length) return results
     results = results.results[0]
     var columns = results.columns
-    var rows = results.data.map(x => x.row)
-    var graphs = results.data.map(x => x.graph)
+    var rows = results.data.map((x) => x.row)
+    var graphs = results.data.map((x) => x.graph)
     var added = {}
     var graph = graphs.reduce((sum, item) => {
       item = item || { nodes: [], relationships: [] }
-      item.nodes.forEach(node => {
+      item.nodes.forEach((node) => {
         sum[node.id] = {
           labels: node.labels,
           relationships: []
@@ -23,15 +23,15 @@ function reduce (tokens) {
       return sum
     }, {})
 
-    graphs.forEach(item => {
+    graphs.forEach((item) => {
       if (!item.relationships) return
-      item.relationships.forEach(relationship => {
+      item.relationships.forEach((relationship) => {
         var start = graph[relationship.startNode]
         var end = graph[relationship.endNode]
         add(start)
         add(end)
         function add (type) {
-          if (type && !type.relationships.filter(x => x.id === relationship.id).length) type.relationships.push(relationship)
+          if (type && !type.relationships.filter((x) => x.id === relationship.id).length) type.relationships.push(relationship)
         }
       })
     })

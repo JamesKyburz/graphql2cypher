@@ -23,7 +23,7 @@ function parse (query, cb) {
   function map (part) {
     return Object.keys(tokens)
       .map((x) => tokens[x][part])
-      .filter(Boolean)
+      .filter((Boolean))
   }
 
   function join (part, delimiter) {
