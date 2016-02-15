@@ -51,11 +51,14 @@ function reduce (tokens) {
           var entity = column.slice(2, -2)
           if (!row[j]) row[j] = nulls++
           var id = row[j]
+          var node = nodes[entity]
+          if (!added[id] && !node.parent) {
+            added = {}
+          }
           if (!added[id]) {
             var data = {
               properties: {}
             }
-            var node = nodes[entity]
             if (node.parent) {
               entityPointer[node.parent][entity] = entityPointer[node.parent][entity] || []
               entityPointer[node.parent][entity].push(data)
