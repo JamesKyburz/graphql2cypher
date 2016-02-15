@@ -24,7 +24,7 @@ function reduce (tokens) {
     }, {})
 
     graphs.forEach((item) => {
-      if (!item.relationships) return
+      if (!item || !item.relationships) return
       item.relationships.forEach((relationship) => {
         var start = graph[relationship.startNode]
         var end = graph[relationship.endNode]
