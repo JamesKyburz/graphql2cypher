@@ -24,6 +24,32 @@ exports.peterNoLabels =
   ]
 }]
 
+exports.peterAndPaulNoLabels =
+[{
+  'properties': {
+    'name': 'Peter'
+  },
+  'beer': [
+    {
+      'properties': {
+        'name': 'IPA XX'
+      }
+    }
+  ]
+},
+{
+  'properties': {
+    'name': 'Paul'
+  },
+  'beer': [
+    {
+      'properties': {
+        'name': 'IPA XX'
+      }
+    }
+  ]
+}]
+
 exports.peterLabelsAndRelationships =
 [{
   'properties': {
@@ -472,6 +498,39 @@ exports.peterOK =
               }
             ]
           }
+        }
+      ]
+    }
+  ],
+  'errors': []
+}
+
+exports.peterAndPaulOK =
+{
+  'results': [
+    {
+      'columns': [
+        '__pid',
+        'p.name',
+        '__beerid',
+        'beer.name'
+      ],
+      'data': [
+        {
+          'row': [
+            3757,
+            'Peter',
+            3758,
+            'IPA XX'
+          ]
+        },
+        {
+          'row': [
+            4757,
+            'Paul',
+            3758,
+            'IPA XX'
+          ]
         }
       ]
     }

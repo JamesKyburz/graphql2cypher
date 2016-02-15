@@ -1,9 +1,9 @@
-var tape = require('tape')
+var test = require('tape')
 var fixtures = require('./fixtures')
 
 var parse = require('../')
 
-tape('test entity with 1 field', (t) => {
+test('test entity with 1 field', (t) => {
   t.plan(2)
   var expected = trim`
     match(user:user {id: {id}})
@@ -22,7 +22,7 @@ tape('test entity with 1 field', (t) => {
   })
 })
 
-tape('user entity with address', (t) => {
+test('user entity with address', (t) => {
   t.plan(2)
   var expected = trim`
     match(user:user {id: {id}}) optional match(user)<-[__addressr:address]->(address:address {addressId: {addressId}})
@@ -45,7 +45,7 @@ tape('user entity with address', (t) => {
   })
 })
 
-tape('deep query', (t) => {
+test('deep query', (t) => {
   t.plan(2)
   var expected = trim`
     match(p:person {id: {id}}) optional match(p)<-[__fr:friend]->(f:friend) optional match(f)<-[__foffr:friend]->(foff:friend) optional match(foff)<-[__foffoffr:friend]->(foffoff:friend)
@@ -76,7 +76,7 @@ tape('deep query', (t) => {
   })
 })
 
-tape('root edges', (t) => {
+test('root edges', (t) => {
   t.plan(2)
   var expected = trim`
     match(r:root) optional match(r)<-[__c1r:child]->(c1:child) optional match(c1)<-[__c1c1r:child]->(c1c1:child) optional match(r)<-[__c2r:child]->(c2:child)
@@ -109,7 +109,7 @@ tape('root edges', (t) => {
   })
 })
 
-tape('fields must be specified', (t) => {
+test('fields must be specified', (t) => {
   t.plan(1)
   parse(`
     root() {}
@@ -118,7 +118,7 @@ tape('fields must be specified', (t) => {
   })
 })
 
-tape('relationship must be specified', (t) => {
+test('relationship must be specified', (t) => {
   t.plan(1)
   parse(`
     root() {
@@ -135,7 +135,7 @@ tape('relationship must be specified', (t) => {
   })
 })
 
-tape('cannot have duplicate names', (t) => {
+test('cannot have duplicate names', (t) => {
   t.plan(1)
   parse(`
     root() {
@@ -153,7 +153,7 @@ tape('cannot have duplicate names', (t) => {
  )
 })
 
-tape('multiple parameters', (t) => {
+test('multiple parameters', (t) => {
   t.plan(2)
   var expected = trim`
     match(root:root {id: {id}, name: {name}, prop: 42, prop2: \'42\'}) optional match(root)<-[__childrchild]->(child:child {childId: {childId}, name: {name}, prop: 42, prop2: \'42\'})
@@ -176,7 +176,7 @@ tape('multiple parameters', (t) => {
   })
 })
 
-tape('reduce peter with no labels or relationships', (t) => {
+test('reduce peter with no labels or relationships', (t) => {
   t.plan(2)
   var results = fixtures.peterOK
   var expected = fixtures.peterNoLabels
@@ -201,7 +201,7 @@ tape('reduce peter with no labels or relationships', (t) => {
   })
 })
 
-tape('reduce peter with labels', (t) => {
+test('reduce peter with labels', (t) => {
   t.plan(2)
   var results = fixtures.peterOK
   var expected = fixtures.peterLabelsOnly
@@ -229,7 +229,7 @@ tape('reduce peter with labels', (t) => {
   })
 })
 
-tape('reduce peter with labels and relationships', (t) => {
+test('reduce peter with labels and relationships', (t) => {
   t.plan(2)
   var results = fixtures.peterOK
   var expected = fixtures.peterLabelsAndRelationships
@@ -260,7 +260,7 @@ tape('reduce peter with labels and relationships', (t) => {
   })
 })
 
-tape('reduce peter with graph', (t) => {
+test('reduce peter with graph', (t) => {
   t.plan(2)
   var results = fixtures.peterOK
   var expected = fixtures.peterGraph
@@ -279,6 +279,26 @@ tape('reduce peter with graph', (t) => {
                 name
               }
             }
+          }
+        }
+      }
+  }`, (err, r) => {
+    t.error(err)
+    t.deepEqual(r.reduce(results), expected)
+  })
+})
+
+test('two people liking same beer', (t) => {
+  t.plan(2)
+  var results = fixtures.peterAndPaulOK
+  var expected = fixtures.peterAndPaulNoLabels
+  parse(`
+    person() as p {
+      properties {
+        name,
+        beer(relationship: ":likes") {
+          properties {
+            name
           }
         }
       }
