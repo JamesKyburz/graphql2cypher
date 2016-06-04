@@ -22,7 +22,7 @@
   },
   "devDependencies": {
     "faucet": "0.0.1",
-    "standard": "7.1.1",
+    "standard": "7.1.2",
     "tape": "4.5.1",
     "watch": "0.18.0"
   },
