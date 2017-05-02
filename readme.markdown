@@ -1,12 +1,10 @@
 # graphql2cypher
 
-[![Greenkeeper badge](https://badges.greenkeeper.io/JamesKyburz/graphql2cypher.svg)](https://greenkeeper.io/)
-
 Naive parser from graphql to cypher query.
 
-[![js-standard-style](https://cdn.rawgit.com/feross/standard/master/badge.svg)](https://github.com/feross/standard)
-
+[![js-standard-style](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://github.com/feross/standard)
 [![build status](https://api.travis-ci.org/JamesKyburz/graphql2cypher.svg)](https://travis-ci.org/JamesKyburz/graphql2cypher)
+[![Greenkeeper badge](https://badges.greenkeeper.io/JamesKyburz/graphql2cypher.svg)](https://greenkeeper.io/)
 
 main.js:
 
