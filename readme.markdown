@@ -1,3 +1,5 @@
+# This repository is no longer maintained.
+
 # graphql2cypher
 
 Naive parser from graphql to cypher query.
